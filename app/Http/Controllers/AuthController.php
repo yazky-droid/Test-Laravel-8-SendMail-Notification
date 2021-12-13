@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Mail\SendOtpMail;
+use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use App\Models\OtpVerification;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -45,6 +49,7 @@ class AuthController extends Controller
             'password.required' => 'Kolom password harus diisi !',
             'password_confirmation.same' => 'Passord harus sama !',
         ];
+
         $validated = Validator::make($request->all(),[
             'name' => 'required',
             'email' => 'required|email|unique:users',
@@ -63,10 +68,20 @@ class AuthController extends Controller
             ]);
         }
 
-        $otpString = '0123456789';
+        $arr = [0,1,2,3,4,5,6,7,8,9];
+        $arr = implode('', Arr::random($arr, 6));
 
-        $pin = mt_rand(10000, 99999);
+        $otp_codes = OtpVerification::create([
+            'email' => $request->email,
+            'otp_code' =>  $arr,
+            'user_id' => $user->id
+        ]);
 
+        Mail::to($user)->send(new SendOtpMail($otp_codes, $user->name));
+
+        return response()->json([
+            'message' => 'Input User ' .$user->name. ' Success'
+        ], 201);
     }
 
     /**

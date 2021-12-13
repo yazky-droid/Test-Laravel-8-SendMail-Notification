@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\OtpVerification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -16,13 +17,13 @@ class SendOtpMail extends Mailable
      *
      * @return void
      */
-    public $view;
-    public $details;
+    protected $otp_code;
+    protected $user_name;
 
-    public function __construct($view, $details)
+    public function __construct(OtpVerification $otp, $user)
     {
-        $this->view = $view;
-        $this->details = $details;
+        $this->otp_code = $otp;
+        $this->user_name = $user;
     }
 
     /**
@@ -32,6 +33,11 @@ class SendOtpMail extends Mailable
      */
     public function build()
     {
-        return $this->subject('Admin JCC')->view('mail.otpVerification');
+        return $this->markdown('mail.otpVerification')
+                            ->with([
+                                'otp_code' => $this->otp_code->otp_code,
+                                'name' => $this->user_name
+                            ]);
     }
+
 }
