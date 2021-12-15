@@ -84,28 +84,46 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function otpVerification(Request $request)
+    public function otpVerification(Request $request, $id)
     {
-        $user = User::where('email', $request['email'])->first();
-        $otpVerify = OtpVerification::where('otp_code', $request['otp_code'])->where('email', $request['email'])->first();
+        $user = User::with('otpCodes')->find($id);
+        $otpVerify = otpVerification::orderBy('created_at', "desc")->firstWhere('user_id', $id);
 
-        if (!$user) {
+        if ($user->email == $otpVerify->email) {
+            if ($otpVerify->otp_code == $request->otp_code) {
+                $user->update([
+                    'is_verified' => true
+                ]);
+                return response()->json([
+                    'message' => 'OTP is valid. Thank you for your verification. You may sign in now.'
+                ], 200);
+            } else {
+                return response()->json([
+                    'message' => 'OTP code is invalid'
+                ]);
+            }
+        }else {
             return response()->json([
                 'message' => 'Email is invalid'
             ]);
         }
-        if(!$otpVerify){
-            return response()->json([
-                'message' => 'Your OTP is invalid'
-            ], 400);
-        } else {
-            $user->update([
-                'is_verified' => true
-            ]);
-            return response()->json([
-                'message' => 'Success confirmed OTP, you may sign in now. Thank you !'
-            ]);
-        }
+        // if (!$user) {
+        //     return response()->json([
+        //         'message' => 'Email is invalid'
+        //     ]);
+        // }
+        // elseif(!$otpVerify){
+        //     return response()->json([
+        //         'message' => 'Your OTP is invalid'
+        //     ], 400);
+        // } else {
+        //     $user->update([
+        //         'is_verified' => true
+        //     ]);
+        //     return response()->json([
+        //         'message' => 'Success confirmed OTP, you may sign in now. Thank you !'
+        //     ]);
+        // }
     }
     /**
      * Display the specified resource.
