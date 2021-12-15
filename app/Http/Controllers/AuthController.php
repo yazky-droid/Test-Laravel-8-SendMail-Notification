@@ -84,6 +84,29 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function otpVerification(Request $request)
+    {
+        $user = User::where('email', $request['email'])->first();
+        $otpVerify = OtpVerification::where('otp_code', $request['otp_code'])->where('email', $request['email'])->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Email is invalid'
+            ]);
+        }
+        if(!$otpVerify){
+            return response()->json([
+                'message' => 'Your OTP is invalid'
+            ], 400);
+        } else {
+            $user->update([
+                'is_verified' => true
+            ]);
+            return response()->json([
+                'message' => 'Success confirmed OTP, you may sign in now. Thank you !'
+            ]);
+        }
+    }
     /**
      * Display the specified resource.
      *
